@@ -1,0 +1,65 @@
+main {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  form {
+    width: 100%;
+    max-width: 380px;
+    background: #1e1e1e;
+    padding: 2rem;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  h1 {
+    text-align: center;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+
+  .input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+
+    label {
+      font-size: 0.85rem;
+      color: #cfcfcf;
+    }
+
+    input {
+      padding: 0.65rem 0.75rem;
+      border-radius: 5px;
+      border: 1px solid #333;
+      background: #2a2a2a;
+      color: whitesmoke;
+      outline: none;
+
+      &::placeholder {
+        color: #777;
+      }
+
+      &:focus {
+        border-color: #4f9cff;
+      }
+    }
+  }
+
+  button {
+    padding: 0.7rem;
+    border-radius: 5px;
+    border: none;
+    background: #4f9cff;
+    color: white;
+    font-weight: 500;
+    cursor: pointer;
+
+    &:hover {
+      background: #3d86e6;
+    }
+  }
+}
