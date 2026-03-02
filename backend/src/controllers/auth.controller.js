@@ -7,27 +7,67 @@ import jwt from 'jsonwebtoken'
  * @description register a new user , expects username , email and password in req body
  * @access public 
  */
-export async function registerUserController(req , res){
-    const {username , email , password} = req.body;
-    if(!username || !email || !password){
+export async function registerUserController(req, res) {
+    const { username, email, password } = req.body;
+    if (!username || !email || !password) {
         return res.status(400).json({
-            message : 'Please provide username and password'
+            message: 'Please provide username and password'
         })
     }
     const doesUserExists = await userModel.findOne({
-        $or : [{username} , {email}]
+        $or: [{ username }, { email }]
     })
-    if(doesUserExists){
+    if (doesUserExists) {
         return res.status(400).json({
-            message : 'Account already exists with this email or username'
+            message: 'Account already exists with this email or username'
         })
     }
-    const hash = await bcrypt.hash(password , 10);
+    const hash = await bcrypt.hash(password, 10);
     const user = await userModel.create({
-        username , 
-        email ,
-        password : hash,
+        username,
+        email,
+        password: hash,
     })
+
+    const token = jwt.sign(
+        { id: user._id, username: user.username },
+        process.env.JWT_SECRET,
+        { expiresIn: '1d' }
+    )
+
+    res.cookie('token', token);
+
+    res.status(201).json({
+        message: 'User registered successfully'
+    })
+
+}
+/**
+* @name loginUserController
+* @description Logs in a user , expects email , password in body
+* @access Public
+*/
+
+export async function loginUserController(req, res) {
+    const { email, password } = req.body;
+    if (!email || !password) {
+        return res.status(400).json({
+            message: "Please provide email and password",
+        });
+    }
+    const user = await userModel.findOne({ email });
+    if (!user) {
+        return res.status(400).json({
+            message: 'Invalid email or password'
+        })
+    }
+
+    const isPasswordValid =  await bcrypt.compare(password , user.password)
+    if(!isPasswordValid){
+        return res.status(400).json({
+            message : 'Invalid email or password!'
+        })
+    }
 
     const token = jwt.sign(
         {id : user._id , username : user.username},
@@ -36,10 +76,13 @@ export async function registerUserController(req , res){
     )
 
     res.cookie('token' , token);
-
-    res.status(201).json({
-        message : 'User registered successfully'
+    res.status(200).json({
+        message : 'User loggedIn successfully',
+        user : {
+            id : user._id,
+            username : user.username,
+            email : user.email
+        }
     })
-
 }
 
