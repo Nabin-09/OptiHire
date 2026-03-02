@@ -1,12 +1,16 @@
 import '../auth.form.scss'
 
 const Login = () => {
+
+  const handleSubmit = (e)=>{
+        e.preventDefault();   
+  }
   return (
     <main>
         <div className="form-container"></div>
        
 
-        <form autoComplete='off'>
+        <form autoComplete='off' onSubmit={handleSubmit}>
              <h1>Login</h1>
             <div className="input-group">
                 <label htmlFor="email">Email</label>
