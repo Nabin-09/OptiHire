@@ -23,8 +23,30 @@ export async function login({email, password}){
             withCredentials : true
         });
 
-        return response;
+        return response.data;
      }catch(err){
         console.log(`Axios error : ${err}`)
      }
+}
+
+export async function logout(){
+    try{
+        const response = await axios.get('http://localhost:5000/api/auth/logout' , {
+            withCredentials : true
+        })
+        return response.data
+    }catch(err){
+        console.log(`${err}`)
+    }
+}
+
+export async function getMe(){
+    try{
+        const response = await axios.get('http://localhost:5000/api/auth/get-me' , {
+            withCredentials : true
+        });
+        return response.data;
+    }catch(err){
+        console.log(`Axios error : ${err}`)
+    }
 }
