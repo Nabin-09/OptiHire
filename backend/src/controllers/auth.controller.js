@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import { userModel } from "../models/User.model.js";
 import jwt from 'jsonwebtoken'
+import { tokenBlackListModel } from "../models/Blacklist.model.js";
 
 /**
  * @name registerUserController
@@ -86,3 +87,30 @@ export async function loginUserController(req, res) {
     })
 }
 
+
+export async function logoutUserController(req , res){
+    const token = req.cookies.token;
+    if(token){
+        await tokenBlackListModel.create({token})
+    }
+
+    res.clearCookie('token');
+    res.status(200).json({
+        message : 'User logged out succesfully!'
+    })
+}
+
+/**
+ * @name getMeController
+ * @description get the details of current logged in user
+ * @access private
+ */
+export async function getMeController(req  , res){
+    const user = await userModel.findById(req.user.id);
+    
+    res.status(200).json({
+        id : user._id,
+        username : user.username,
+        email : user.email
+    })
+}
