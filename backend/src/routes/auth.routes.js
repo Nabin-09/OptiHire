@@ -1,3 +1,13 @@
 import {Router} from 'express'
+import { registerUserController } from '../controllers/auth.controller';
 
-const authRouter = Router()
+const authRouter = Router();
+/**
+ * @route POST /api/auth/register
+ * @description Register a new user
+ * @access Public
+ */
+
+authRouter.post('/register', registerUserController)
+
+export default authRouter
