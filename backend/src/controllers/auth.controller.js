@@ -105,12 +105,14 @@ export async function logoutUserController(req , res){
  * @description get the details of current logged in user
  * @access private
  */
-export async function getMeController(req  , res){
+export async function getMeController(req, res) {
     const user = await userModel.findById(req.user.id);
-    
+
     res.status(200).json({
-        id : user._id,
-        username : user.username,
-        email : user.email
+        user: {
+            id: user._id,
+            username: user.username,
+            email: user.email
+        }
     })
 }
