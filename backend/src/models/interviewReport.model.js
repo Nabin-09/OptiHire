@@ -112,5 +112,10 @@ const interviewReportSchema = new mongoose.Schema({
         min : 0,
         max : 100
     },
-
+    technicalQuestions : [technicalQuestionSchema],
+    behavioralQuestions : [behavioralQuestionSchema],
+    skillGaps : [skillGapSchema],
+    preparationPlan : [preparationPlanSchema]
 })
+
+export const interviewReportModel = mongoose.model('InterviewReport' , interviewReportSchema);
