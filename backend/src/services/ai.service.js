@@ -186,7 +186,9 @@ Important rules:
       }
     });
 
+    
     const parsed = JSON.parse(response.text);
+    console.log("AI Response Parsed:", parsed);
 
     return {
       jobDescription,
