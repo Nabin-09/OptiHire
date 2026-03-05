@@ -9,7 +9,7 @@ dotenv.config();
 
 const PORT = process.env.PORT || 5000;
 connectDb();
-generateInterviewReport({resume , selfDescription , jobDescription});
+generateInterviewReport({resume : resume.text , selfDescription , jobDescription});
 app.listen(PORT , ()=>{
     console.log(`✅ Server running @ ${process.env.PORT}`);
     
