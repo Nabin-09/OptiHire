@@ -1,44 +1,38 @@
-import { PDFParse } from "pdf-parse";
 import { generateInterviewReport } from "../services/ai.service.js";
 import { interviewReportModel } from "../models/interviewReport.model.js";
 
-export async function generateInterviewReportController(req, res) {
+export const createInterviewReport = async (req,res) => {
+
   try {
 
-    const resumeFile = req.file;
+    const {resume,selfDescription,jobDescription} = req.body;
 
-    const resumeContent = await new PDFParse(
-      Uint8Array.from(resumeFile.buffer)
-    ).getText();
-
-    const { selfDescription, jobDescription } = req.body;
-
-    const interviewReportByAi = await generateInterviewReport({
-      resume: resumeContent.text,
+    const aiReport = await generateInterviewReport({
+      resume,
       selfDescription,
       jobDescription
     });
 
-    const interviewReport = await interviewReportModel.create({
-      user: req.user.id,
-      resume: resumeContent.text,
-      selfDescription,
+    const report = await interviewReportModel.create({
       jobDescription,
-      ...interviewReportByAi
+      resume,
+      selfDescription,
+      ...aiReport
     });
 
-    res.status(201).json({
-      message: "Interview report generated successfully!",
-      interviewReport
+    res.status(200).json({
+      message:"Interview report generated successfully.",
+      interviewReport: report
     });
 
-  } catch (error) {
+  } catch(err) {
 
-    console.error("Interview Report Error:", error);
+    console.error(err);
 
     res.status(500).json({
-      message: "Failed to generate interview report"
+      message:"AI generation failed"
     });
 
   }
-}
+
+};

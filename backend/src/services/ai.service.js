@@ -1,226 +1,106 @@
-  import { GoogleGenAI } from "@google/genai";
-  import axios from "axios";
-  import { z } from "zod";
-  import { zodToJsonSchema } from "zod-to-json-schema";
-  import "dotenv/config";
+import ollama from "ollama";
+import { z } from "zod";
 
-  // const ai = new GoogleGenAI({
-  //   apiKey: process.env.GEMINI_API_KEY
-  // });
+/*
+SCHEMA matching your Mongo model
+*/
 
+const interviewSchema = z.object({
 
-  /*
-  AI STRUCTURED OUTPUT SCHEMA
-  Designed to match the MongoDB InterviewReport model
-  */
+  matchScore: z.number().min(0).max(100),
 
-  const interviewReportAISchema = z.object({
+  technicalQuestions: z.array(
+    z.object({
+      question: z.string(),
+      intention: z.string(),
+      answer: z.string()
+    })
+  ),
 
-    matchScore: z
-      .number()
-      .min(0)
-      .max(100)
-      .describe(
-        "Overall match score between the candidate and the job description on a scale of 0 to 100. Higher means better fit."
-      ),
+  behavioralQuestions: z.array(
+    z.object({
+      question: z.string(),
+      intention: z.string(),
+      answer: z.string()
+    })
+  ),
 
-    technicalQuestions: z
-      .array(
-        z.object({
+  skillGaps: z.array(
+    z.object({
+      skill: z.string(),
+      severity: z.enum(["low","medium","high"])
+    })
+  ),
 
-          question: z
-            .string()
-            .describe(
-              "A technical interview question relevant to the job description and the candidate's skills."
-            ),
+  preparationPlan: z.array(
+    z.object({
+      day: z.number(),
+      focus: z.string(),
+      tasks: z.array(z.string())
+    })
+  )
 
-          intention: z
-            .string()
-            .describe(
-              "The interviewer’s goal behind asking this technical question (e.g. testing system design, backend knowledge, debugging ability)."
-            ),
-
-          answer: z
-            .string()
-            .describe(
-              "Guidance on how the candidate should answer this question, including concepts to mention and structure of the answer."
-            )
-
-        })
-      )
-      .min(3)
-      .describe(
-        "List of technical interview questions the candidate may face for this job role."
-      ),
-
-    behavioralQuestions: z
-      .array(
-        z.object({
-
-          question: z
-            .string()
-            .describe(
-              "A behavioral interview question commonly asked in software engineering interviews."
-            ),
-
-          intention: z
-            .string()
-            .describe(
-              "The purpose of asking this behavioral question (e.g. leadership, teamwork, problem solving)."
-            ),
-
-          answer: z
-            .string()
-            .describe(
-              "Recommended way the candidate should structure their answer, usually using the STAR method."
-            )
-
-        })
-      )
-      .min(3)
-      .describe(
-        "Behavioral interview questions that test communication, teamwork, and problem solving."
-      ),
-
-    skillGaps: z
-      .array(
-        z.object({
-
-          skill: z
-            .string()
-            .describe(
-              "A missing or weak skill required for the job that the candidate should improve."
-            ),
-
-          severity: z
-            .enum(["low", "medium", "high"])
-            .describe(
-              "Importance of this missing skill relative to the job role."
-            )
-
-        })
-      )
-      .min(2)
-      .describe(
-        "Skills that the candidate lacks or needs to improve to better match the job description."
-      ),
-
-    preparationPlan: z
-      .array(
-        z.object({
-
-          day: z
-            .number()
-            .describe(
-              "Day number in the interview preparation schedule."
-            ),
-
-          focus: z
-            .string()
-            .describe(
-              "Main focus topic for that day of preparation (for example: Data Structures, System Design, Behavioral Practice)."
-            ),
-
-          tasks: z
-            .array(
-              z.string().describe(
-                "A specific actionable preparation task to complete that day."
-              )
-            )
-            .describe(
-              "List of tasks the candidate should complete on that day."
-            )
-
-        })
-      )
-      .min(5)
-      .describe(
-        "Day-by-day preparation roadmap to improve the candidate's readiness for the interview."
-      )
-
-  }).describe(
-    "A complete interview preparation report analyzing how well a candidate matches a job description."
-  );
+});
 
 
+export async function generateInterviewReport({
+  resume,
+  selfDescription,
+  jobDescription
+}) {
 
-  export async function generateInterviewReport({
-    resume,
-    selfDescription,
-    jobDescription
-  }) {
+  const prompt = `
+You are a senior backend engineering interviewer.
 
-    try {
+Analyze the candidate resume and job description.
 
-      const prompt = `
-  You are an expert technical interviewer and career coach.
+Return ONLY valid JSON using EXACTLY this structure:
 
-  Analyze the following candidate information and generate a structured interview preparation report.
+{
+ "matchScore": number,
+ "technicalQuestions":[
+  {"question":"","intention":"","answer":""}
+ ],
+ "behavioralQuestions":[
+  {"question":"","intention":"","answer":""}
+ ],
+ "skillGaps":[
+  {"skill":"","severity":"low|medium|high"}
+ ],
+ "preparationPlan":[
+  {"day":1,"focus":"","tasks":["",""]}
+ ]
+}
 
-  Resume:
-  ${resume}
+Rules:
+- matchScore between 0-100
+- minimum 3 technicalQuestions
+- minimum 2 behavioralQuestions
+- minimum 3 skillGaps
+- preparationPlan must contain 7 days
 
-  Self Description:
-  ${selfDescription}
+Resume:
+${resume}
 
-  Job Description:
-  ${jobDescription}
+Self Description:
+${selfDescription}
 
-  Important rules:
-  - Return ONLY JSON
-  - Follow the schema exactly
-  - Do not omit fields
-  - matchScore must be between 0 and 100
-  - Generate at least:
-    • 3 technical questions
-    • 3 behavioral questions
-    • 2 skill gaps
-    • 5 day preparation plan
-  `;
+Job Description:
+${jobDescription}
+`;
 
-      // const response = await ai.models.generateContent({
-      //   model: "gemini-2.5-flash",
-      //   contents: prompt,
-      //   config: {
-      //     responseMimeType: "application/json",
-      //     schema: zodToJsonSchema(interviewReportAISchema)
-      //   }
-      // });
-
-
-    const response = await axios.post(
-      "http://localhost:11434/api/generate",
+  const response = await ollama.chat({
+    model: "llama3.1:latest",
+    format: "json",
+    messages: [
       {
-        model: "llama3.1:latest",
-        prompt,
-        stream: false,
-        format : 'json',
-        options: {
-          temperature: 0.4
-        }
-      },
-      {
-        timeout: 120000
+        role: "user",
+        content: prompt
       }
-    );
+    ]
+  });
 
+  const result = JSON.parse(response.message.content);
 
-      const raw = response.data.response;
-      const parsed = JSON.parse(raw);
-      console.log("AI Response Parsed:", parsed);
-
-      return {
-        jobDescription,
-        resume,
-        selfDescription,
-        ...parsed
-      };
-
-    } catch (error) {
-
-      console.error("Gemini AI Error:", error);
-      throw error;
-
-    }
-
-  }
+  return interviewSchema.parse(result); // validate output
+}
