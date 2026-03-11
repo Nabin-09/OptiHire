@@ -36,12 +36,14 @@ export async function logout(){
         console.log(`${err}`)
     }
 }
-
 export async function getMe(){
     try{
         const response = await api.get('/api/auth/get-me');
         return response.data;
     }catch(err){
-        console.log(`Axios error : ${err}`)
+        if(err.response?.status !== 401){
+            console.log(err);
+        }
+        return null;
     }
 }
